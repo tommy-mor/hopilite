@@ -6,7 +6,22 @@ class Hoplite {
     this.radius = 1;
     this.spearRadius = 5;
     this.angle = angle;
+    this.authority = -1;
+    this.goalCoords = [0, 0];
   }
+
+  tick() {
+    const dx = this.goalCoords[0] - this.x;
+    const dy = this.goalCoords[1] - this.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const speed = 2;
+    const velocityX = (dx / distance) * speed;
+    const velocityY = (dy / distance) * speed;
+    this.x += velocityX;
+    this.y += velocityY;
+  }
+
+
 
   draw(ctx) {
     // draw the hoplite
@@ -56,6 +71,10 @@ for (let i = 0; i < 10; i++) {
 }
 
 
+function tick() {
+    // loop through each hoplite and call its tick method
+    hoplites.forEach(hoplite => hoplite.tick()); 
+}
 
 // draw the hoplites
 function draw() {
@@ -77,3 +96,11 @@ ctx.stroke();
 
 // add the canvas to the page
 document.body.appendChild(canvas);
+
+
+// tick and draw in a loop every 20 ms
+setInterval(() => {
+    console.log('ticking');
+    tick();
+    draw();
+}, 20);
