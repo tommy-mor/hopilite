@@ -1,4 +1,28 @@
 // runs in a browser
+class Hoplite {
+  constructor(x, y, angle) {
+    this.x = x;
+    this.y = y;
+    this.radius = 1;
+    this.spearRadius = 5;
+    this.angle = angle;
+  }
+
+  draw(ctx) {
+    // draw the hoplite
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+    ctx.fillStyle = 'red';
+    ctx.fill();
+
+    // draw the spear
+    ctx.beginPath();
+    ctx.arc(this.x + this.spearRadius * Math.cos(this.angle), this.y + this.spearRadius * Math.sin(this.angle), 1, 0, 2 * Math.PI);
+    ctx.fillStyle = 'black';
+    ctx.fill();
+  }
+}
+
 
 // create a canvas element
 const canvas = document.createElement('canvas');
@@ -10,42 +34,44 @@ canvas.height = 500;
 // get the canvas context
 const ctx = canvas.getContext('2d');
 
-// draw a pig
-ctx.beginPath();
-ctx.arc(250, 250, 200, 0, 2 * Math.PI);
-ctx.fillStyle = 'pink';
-ctx.fill();
-ctx.stroke();
+// create an array to hold the hoplites
+const hoplites = [];
 
-// draw the pig's nose
-ctx.beginPath();
-ctx.arc(250, 300, 50, 0, 2 * Math.PI);
-ctx.fillStyle = 'black';
-ctx.fill();
-ctx.stroke();
+// create 10 red hoplites in a row at the top of the screen
+for (let i = 0; i < 10; i++) {
+  const x = i * 50 + 25; // set the x position of the hoplite
+  const y = 25; // set the y position of the hoplite
+  const angle = -Math.PI / 2; // set the angle of the hoplite
+  const hoplite = new Hoplite(x, y, angle); // create a new hoplite
+  hoplites.push(hoplite); // add the hoplite to the array
+}
 
-// draw the pig's eyes
-ctx.beginPath();
-ctx.arc(200, 200, 25, 0, 2 * Math.PI);
-ctx.fillStyle = 'black';
-ctx.fill();
-ctx.stroke();
-ctx.beginPath();
-ctx.arc(300, 200, 25, 0, 2 * Math.PI);
-ctx.fillStyle = 'black';
-ctx.fill();
-ctx.stroke();
+// create 10 blue hoplites in a row at the bottom of the screen
+for (let i = 0; i < 10; i++) {
+  const x = i * 50 + 25; // set the x position of the hoplite
+  const y = 475; // set the y position of the hoplite
+  const angle = Math.PI / 2; // set the angle of the hoplite
+  const hoplite = new Hoplite(x, y, angle); // create a new hoplite
+  hoplites.push(hoplite); // add the hoplite to the array
+}
 
-// draw the pig's ears
+
+
+// draw the hoplites
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height); // clear the canvas
+  hoplites.forEach(hoplite => hoplite.draw(ctx)); // draw each hoplite
+}
+
+// call the draw function to draw the hoplites
+draw();
+
+
+// draw the arena border
 ctx.beginPath();
-ctx.arc(150, 150, 50, 0, 1.5 * Math.PI);
-ctx.fillStyle = 'pink';
-ctx.fill();
-ctx.stroke();
-ctx.beginPath();
-ctx.arc(350, 150, 50, 1.5 * Math.PI, 2 * Math.PI);
-ctx.fillStyle = 'pink';
-ctx.fill();
+ctx.rect(10, 10, canvas.width - 20, canvas.height - 20);
+ctx.strokeStyle = 'red';
+ctx.lineWidth = 2;
 ctx.stroke();
 
 
