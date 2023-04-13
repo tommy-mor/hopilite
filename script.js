@@ -1,3 +1,11 @@
+// function that finds the k nearest neighbors from a list using naive algorithm
+function findKNearestNeighborsNaive(hopilites, k, hopilite) {
+  // sort the list by distance to the point
+  hopilites.sort((a, b) => b.distance(hopilite) - a.distance(hopilite));
+  // return the k nearest neighbors
+  return hopilites.slice(0, k);
+} 
+
 // runs in a browser
 class Hoplite {
 
@@ -16,9 +24,9 @@ class Hoplite {
     var goal;
 
     if (this.authority != -1) {
-        goal = this.authority.goalCoords;
+      goal = this.authority.goalCoords;
     } else {
-        goal = [0, 0];
+      goal = [0, 0];
     }
 
     const dx = goal[0] - this.x;
@@ -33,6 +41,16 @@ class Hoplite {
 
 
   draw(ctx) {
+    var targets = findKNearestNeighborsNaive(this.authority.enemy_hopilites, 2, this);
+
+    targets.map(t => {
+      // draw a line to the target
+      ctx.beginPath();
+      ctx.moveTo(this.x, this.y);
+      ctx.lineTo(t.x, t.y);
+      ctx.strokeStyle = 'black';
+      ctx.stroke();
+    });
     // draw the hoplite
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
@@ -64,15 +82,17 @@ class Team {
     this.color = color;
     this.startingY = startingY;
     this.hopilites = [];
+    this.enemy_hopilites = []
     this.goalCoords = [WIDTH / 2, HEIGHT / 2];
   }
 
   initKnn(enemy_hopilites) {
-    this.our_positions = new KdTree(this.hopilites.map(h => [h.x, h.y, h]));
+    this.enemy_hopilites = enemy_hopilites;
+    //this.our_positions = new KdTree(this.hopilites.map(h => [h.x, h.y, h]));
   }
 
   tick() {
-    this.our_positions = new KdTree(this.hopilites.map(h => [h.x, h.y, h]));
+    //this.our_positions = new KdTree(this.hopilites.map(h => [h.x, h.y, h]));
     this.hopilites.forEach(h => h.tick());
   }
 
