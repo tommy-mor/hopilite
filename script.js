@@ -1,52 +1,24 @@
-function nearestNeighbor(hoplites, point) {
-  let minDistance = Infinity;
-  let nearestHoplite = null;
-
-  for (let i = 0; i < hoplites.length; i++) {
-    const hoplite = hoplites[i];
-    const dx = hoplite.x - point[0];
-    const dy = hoplite.y - point[1];
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    if (distance < minDistance) {
-      minDistance = distance;
-      nearestHoplite = hoplite;
-    }
-  }
-
-  return nearestHoplite;
-}
-
-
 // runs in a browser
 class Hoplite {
 
-  constructor(color, x, y, angle, role='pawn') {
+  constructor(authority, x, y, angle) {
     this.x = x;
     this.y = y;
     this.radius = 1;
     this.spearRadius = 5;
     this.angle = angle;
-    this.authority = -1;
-    this.color = color;
+    this.authority = authority;
     this.goalCoords = [250, 250];
-    this.role = role;
   }
 
   tick() {
-    // if there is an enemy (person of different authority) within radius 10, charge run towards that.
-    // otherwise, run towards goalCoords
-    let enemy = nearestNeighbor(hoplites.filter(hoplite => hoplite.authority !== this.authority),
-                                [this.x, this.y]);
 
     var goal;
 
-    if (this.distance(enemy) < 10) {
-        goal = [enemy.x, enemy.y];
-    } else if (this.role === "pawn" && this.authority != -1) {
+    if (this.authority != -1) {
         goal = this.authority.goalCoords;
     } else {
-        console.log(this.role)
-        goal = [0,0];
+        goal = [0, 0];
     }
 
     const dx = goal[0] - this.x;
@@ -60,14 +32,11 @@ class Hoplite {
   }
 
 
-
-
-
   draw(ctx) {
     // draw the hoplite
     ctx.beginPath();
     ctx.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
-    ctx.fillStyle = this.color;
+    ctx.fillStyle = this.authority.color;
     ctx.fill();
 
     // draw the spear
@@ -83,6 +52,46 @@ class Hoplite {
   }
 }
 
+const WIDTH = 500;
+const HEIGHT = 500;
+
+const num_red = 11;
+const num_blue = 11;
+const hoplite_spacing = WIDTH / num_red;
+
+class Team {
+  constructor(color, startingY) {
+    this.color = color;
+    this.startingY = startingY;
+    this.hopilites = [];
+    this.goalCoords = [WIDTH / 2, HEIGHT / 2];
+  }
+
+  initKnn(enemy_hopilites) {
+    this.our_positions = new KdTree(this.hopilites.map(h => [h.x, h.y, h]));
+  }
+
+  tick() {
+    this.our_positions = new KdTree(this.hopilites.map(h => [h.x, h.y, h]));
+    this.hopilites.forEach(h => h.tick());
+  }
+
+  draw(ctx) {
+    this.hopilites.forEach(h => h.draw(ctx));
+  }
+
+  spawn(n) {
+    for (let i = 0; i < n; i++) {
+      const x = i * hoplite_spacing; // set the x position of the hoplite
+      const y = this.startingY; // set the y position of the hoplite
+      const angle = -Math.PI / 2; // set the angle of the hoplite
+      const hoplite = new Hoplite(this, x, y, angle); // create a new hoplite
+      hoplite.authority = this;
+      this.hopilites.push(hoplite); // add the hoplite to the array
+    }
+  }
+}
+
 
 // create a canvas element
 const canvas = document.createElement('canvas');
@@ -94,63 +103,46 @@ canvas.height = 500;
 // get the canvas context
 const ctx = canvas.getContext('2d');
 
-const red_commander = new Hoplite("red", 490, 10, 0, role="commander");
-const blu_commander  = new Hoplite("blue", 10, 490, 0, role="commander");
-// create an array to hold the hoplites
-const hoplites = [];
 
-// create 10 red hoplites in a row at the top of the screen
-for (let i = 0; i < 10; i++) {
-  const x = i * 50 + 25; // set the x position of the hoplite
-  const y = 25; // set the y position of the hoplite
-  const angle = -Math.PI / 2; // set the angle of the hoplite
-  const hoplite = new Hoplite("red", x, y, angle); // create a new hoplite
-  hoplite.authority = red_commander;
-  hoplites.push(hoplite); // add the hoplite to the array
-}
+const red = new Team("red", 20);
+const blu = new Team("blue", HEIGHT - 20);
 
-// create 10 blue hoplites in a row at the bottom of the screen
-for (let i = 0; i < 10; i++) {
-  const x = i * 50 + 25; // set the x position of the hoplite
-  const y = 475; // set the y position of the hoplite
-  const angle = Math.PI / 2; // set the angle of the hoplite
-  const hoplite = new Hoplite("blue", x, y, angle); // create a new hoplite
-  hoplite.authority = blu_commander;
-  hoplites.push(hoplite); // add the hoplite to the array
-}
+const teams = [red, blu];
+red.spawn(num_red)
+blu.spawn(num_blue)
+red.initKnn(blu.hopilites)
+blu.initKnn(red.hopilites)
+
 
 
 function tick() {
-    // loop through each hoplite and call its tick method
-    hoplites.forEach(hoplite => hoplite.tick()); 
+  // loop through each hoplite and call its tick method
+  teams.forEach(team => team.tick());
 }
 
 // draw the hoplites
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height); // clear the canvas
-  hoplites.forEach(hoplite => hoplite.draw(ctx)); // draw each hoplite
+  teams.forEach(t => t.draw(ctx)); // draw each hoplite
 }
-
-// call the draw function to draw the hoplites
-draw();
 
 
 // draw the arena border
 canvas.style.border = '2px solid red';
 canvas.onmousemove = (event) => {
-    const rect = canvas.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+  const rect = canvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
 
-    red_commander.goalCoords = [x,y]
+  red.goalCoords = [x, y]
 }
 
 canvas.onmousedown = (event) => {
-    const rect = canvas.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+  const rect = canvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
 
-    blu_commander.goalCoords = [x,y]
+  blu.goalCoords = [x, y]
 }
 
 
@@ -161,7 +153,7 @@ document.body.appendChild(canvas);
 
 // tick and draw in a loop every 20 ms
 setInterval(() => {
-    console.log('ticking');
-    tick();
-    draw();
+  console.log('ticking');
+  tick();
+  draw();
 }, 20);
